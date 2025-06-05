@@ -1,0 +1,5 @@
+SQLAlchemy==2.0.35
+fastapi==0.114.2
+uvicorn==0.30.6
+pyodbc==5.1.0
+gunicorn==23.0.0

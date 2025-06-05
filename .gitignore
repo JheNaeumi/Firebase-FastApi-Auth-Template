@@ -1,0 +1,6 @@
+db_config.json
+fb_admin_config.json
+fb_config.json
+
+env/
+*.pyc

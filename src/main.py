@@ -16,11 +16,13 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*']
 )
-# TODO Add prefix on routes
-app.include_router(login.router)
-app.include_router(registration.router)
-app.include_router(home.router)
-app.include_router(profile.router)
+
+api_prefix = '/api/2025'
+
+app.include_router(login.router, prefix='{}'.format(api_prefix))
+app.include_router(registration.router, prefix='{}'.format(api_prefix))
+app.include_router(home.router, prefix='{}'.format(api_prefix))
+app.include_router(profile.router, prefix='{}'.format(api_prefix))
 
 
 if __name__ == "__main__":

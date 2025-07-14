@@ -5,7 +5,7 @@ from configurations.firebase import *
 from firebase_admin import auth
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/2025/token")
 
 def signin_via_firebase(username: str, password: str):
     try:

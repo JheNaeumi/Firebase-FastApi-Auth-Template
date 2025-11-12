@@ -7,6 +7,10 @@ from typing import Any, Union
 from pydantic import BaseModel, Field, field_validator
 import re
 
+# Response - [O/Out]
+# Request - [I/In]
+
+# Response - O
 class ResponseBase(BaseModel):
     data: Union[Any, None] = None,
     code: int
@@ -15,7 +19,7 @@ class ResponseBase(BaseModel):
     error: Union[str, None] = ""
     count: int = 0
 
-
+# User 
 class UserBase(BaseModel):
     id: int
     uid: str
@@ -59,7 +63,7 @@ class UserCreate(BaseModel):
         return value
 
 
-
+# Profile 
 class ProfileBase(BaseModel):
     lName : str
     fName : str
@@ -68,6 +72,29 @@ class ProfileBase(BaseModel):
     birthDate : datetime
     profileUid: Union[str, str] = ""
 
+# Profile - I
+class UpdateProfile(BaseModel):
+    fname: str = Field(..., min_length=2, max_length=50)
+    lname: str = Field(..., min_length=2, max_length=50)
+    dname: str = Field(..., min_length=3, max_length=50)
+
+# Password - I 
+class UpdatePassword(BaseModel):
+    current_password: str = Field(..., min_length=8)
+    new_password: str = Field(..., min_length=8, max_length=128)
+    
+    @field_validator('new_password')
+    @classmethod
+    def validate_password_strength(cls, value: str) -> str:
+        if not any(c.isupper() for c in value):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not any(c.islower() for c in value):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not any(c.isdigit() for c in value):
+            raise ValueError('Password must contain at least one number')
+        return value
+
+# Token
 class TokenCreate(BaseModel):
     uid : str
     email :str

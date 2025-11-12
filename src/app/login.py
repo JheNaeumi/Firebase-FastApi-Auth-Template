@@ -8,12 +8,15 @@ from common.authentication.authentication import *
 from fastapi.security import OAuth2PasswordRequestForm
 from firebase_admin import auth
 from common.db import crud, db, schemas
+from sqlalchemy.ext.asyncio import AsyncSession
+
+
 router = APIRouter()
 
 
 @router.post("/login")
 async def login(cred: Annotated[OAuth2PasswordRequestForm, Depends()],
-                db: Session = Depends(db.get_default_db)):
+                db: AsyncSession = Depends(db.get_default_db)):
 
     # Get Username and Password
     email = cred.username
@@ -31,19 +34,19 @@ async def login(cred: Annotated[OAuth2PasswordRequestForm, Depends()],
             status_code=status.HTTP_401_UNAUTHORIZED, detail='Email has not been verified')
 
     # Update DB email verified
-    crud.update_email_as_verfied(db, email=email)
+    await crud.update_email_as_verfied(db, email=email)
 
     
 
     # Create Token Model and Store/Create in DB
-    created_token = crud.create_token(db=db, token=schemas.TokenCreate(
+    created_token = await crud.create_token(db=db, token=schemas.TokenCreate(
         uid=user['localId'],
         email=user['email'],
         accessToken=user['idToken'],
         refreshToken=user['refreshToken']
     ))
     # Get User Info
-    user = crud.get_user_by_email(db=db, email=email)
+    user = await crud.get_user_by_email(db=db, email=email)
 
     
     # Pass Access and Refresh Token

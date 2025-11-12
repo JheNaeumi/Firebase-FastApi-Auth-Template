@@ -10,6 +10,6 @@ default_config = db_config['default']
 
 default_db_connection = urllib.parse.quote_plus(default_config['connection'])
 
-db_conn = "mssql+pyodbc:///?odbc_connect={PARAMS}".format(
+db_conn = "mssql+aioodbc:///?odbc_connect={PARAMS}".format(
     PARAMS=urllib.parse.quote_plus(default_db_connection))
 print(default_db_connection)

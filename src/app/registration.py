@@ -7,6 +7,7 @@ from typing_extensions import Annotated
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from firebase_admin import auth
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from common.db import crud, db, schemas
 from common.helpers.file_system_helper import dir_path_profile, save_image, validate_email, validate_password
 from common.authentication.authentication import *
@@ -19,7 +20,7 @@ async def register_new_user(email: Annotated[str, Form(media_type="multipart/for
                             fname:  Annotated[str, Form(media_type="multipart/form-data")], lname:  Annotated[str, Form(media_type="multipart/form-data")],
                             dname: Annotated[str, Form(media_type="multipart/form-data")],
                             birthdate:  Annotated[datetime, Form(media_type="multipart/form-data")], profileImage: Annotated[UploadFile, File()] = None,
-                            db: Session = Depends(db.get_default_db)):
+                            db: AsyncSession = Depends(db.get_default_db)):
     try:
         # Validate Email and Password
         valid_email = validate_email(email=email)
@@ -61,7 +62,7 @@ async def register_new_user(email: Annotated[str, Form(media_type="multipart/for
         await save_image(file=profileImage, file_name=profile_uid, directory=directory)
     
     # Save/Create Account in DB
-    db_created_user = crud.create_new_user(db=db, user=schemas.UserCreate(
+    db_created_user = await crud.create_new_user(db=db, user=schemas.UserCreate(
         uid=uid,
         lName=lname,
         fName=fname,

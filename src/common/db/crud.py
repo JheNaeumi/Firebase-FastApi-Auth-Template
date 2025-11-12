@@ -1,10 +1,11 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from common.db import models, schemas
-
+from sqlalchemy import update, func, select, delete
 
 #Optimize db Session
-def create_new_user(db: Session, user: schemas.UserCreate):
+async def create_new_user(db: AsyncSession, user: schemas.UserCreate):
 
     new_user = models.User(
         uid=user.uid,
@@ -18,43 +19,48 @@ def create_new_user(db: Session, user: schemas.UserCreate):
         profile_uid=user.profileUid
     )
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    await db.commit()
+    await db.refresh(new_user)
     return new_user
 
-def update_user(db: Session, uid: str, fname:str, lname:str, dname:str):
-    db.query(models.User).filter(models.User.uid == uid).update({
-        "l_name": lname,
-        "f_name": fname,
-        "display_name": dname,
-    })
-    db.commit()
+async def update_user(db: AsyncSession, uid: str, fname:str, lname:str, dname:str):
+    # db.query(models.User).filter(models.User.uid == uid).update({
+    #     "l_name": lname,
+    #     "f_name": fname,
+    #     "display_name": dname,
+    # })
+    await db.execute(update(models.User).where(models.User.uid == uid).values(l_name=lname, f_name=fname, display_name=dname))
+    await db.commit()
     #return updated user
-    return get_user_uid(db=db, uid=uid)
+    return await get_user_uid(db=db, uid=uid)
 
-def update_existing_password(db: Session, uid: str, newhashedpassword : str):
-    db.query(models.User).filter(models.User.uid == uid).update({
-        "hashed_password": newhashedpassword,
-    })
-    db.commit()
+async def update_existing_password(db: AsyncSession, uid: str, newhashedpassword : str):
+    # db.query(models.User).filter(models.User.uid == uid).update({
+    #     "hashed_password": newhashedpassword,
+    # })
+    await db.execute(update(models.User).where(models.User.uid == uid).values(hashed_password = newhashedpassword))
+    await db.commit()
 
-def get_user_by_email(db:Session, email: str):
-    return db.query(models.User).filter(models.User.email == email).first()
+async def get_user_by_email(db:AsyncSession, email: str):
+    #return db.query(models.User).filter(models.User.email == email).first()
+    return (await db.execute(select(models.User).where(models.User.email == email))).scalar_one()
 
-def get_user_uid(db:Session, uid: str):
-    return db.query(models.User).filter(models.User.uid == uid).first()
+async def get_user_uid(db:AsyncSession, uid: str):
+    #return db.query(models.User).filter(models.User.uid == uid).first()
+    return (await db.execute(select(models.User).where(models.User.uid == uid))).scalar_one()
 
-
-def update_email_as_verfied(db: Session, email: str):
+async def update_email_as_verfied(db: AsyncSession, email: str):
     #Check if already verified
-    user = db.query(models.User).filter(models.User.email == email).first()
+    #user = db.query(models.User).filter(models.User.email == email).first()
+    user:models.User = (await db.execute(select(models.User).where(models.User.email == email))).scalar_one()
     if user.is_email_verified == False:
-        db.query(models.User).filter(models.User.email == email).update({
-            "is_email_verified": True
-        })
-        db.commit()
+        # db.query(models.User).filter(models.User.email == email).update({
+        #     "is_email_verified": True
+        # })
+        await db.execute(update(models.User).where(models.User.email == email).values(is_email_verified=True))
+        await db.commit()
     
-def create_token(db: Session, token: schemas.TokenCreate):
+async def create_token(db: AsyncSession, token: schemas.TokenCreate):
 
     new_token = models.Token(
         uid=token.uid,
@@ -63,6 +69,6 @@ def create_token(db: Session, token: schemas.TokenCreate):
         refresh_token=token.refreshToken,
     )
     db.add(new_token)
-    db.commit()
-    db.refresh(new_token)
+    await db.commit()
+    await db.refresh(new_token)
     return new_token

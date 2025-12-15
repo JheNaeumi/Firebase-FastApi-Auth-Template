@@ -9,13 +9,17 @@ from common.db import db, crud, schemas
 from common.authentication.authentication import *
 from firebase_admin import auth
 import bcrypt
+
 router = APIRouter()
 
 logger = logging.getLogger(__name__)
+
+
 # Get Profile
 @router.get('/profile')
 async def get_profile(userUID=Depends(verify_access_token), db: AsyncSession = Depends(db.async_get_default_db)):
     # Get User
+
     user = await crud.get_user_uid(db=db, uid=userUID)
 
     if not user:
@@ -26,6 +30,7 @@ async def get_profile(userUID=Depends(verify_access_token), db: AsyncSession = D
     if user_profile:
         return user_profile
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+
 
 # Update Profile
 @router.put('/profile')
@@ -53,11 +58,15 @@ async def update_profile(fname:  Annotated[str, Form()], lname:  Annotated[str, 
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Something went wrong.')
 
 # Update password
+
+
 @router.put('/profile/password')
-async def update_password(currentpassword: Annotated[str, Form()], newpassword: Annotated[str, Form()], userUID=Depends(verify_access_token), db: AsyncSession = Depends(db.async_get_default_db)):
+async def update_password(currentpassword: Annotated[str, Form(min_length=8)], newpassword: Annotated[str, Form()], userUID=Depends(verify_access_token), db: AsyncSession = Depends(db.async_get_default_db)):
 
     # Check current password
     user = await crud.get_user_uid(db=db, uid=userUID)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     hashed_current_password = user.hashed_password
 
     if bcrypt.checkpw(currentpassword.encode("utf-8"), hashed_current_password.encode("utf-8")):
@@ -75,6 +84,8 @@ async def update_password(currentpassword: Annotated[str, Form()], newpassword: 
             )
             return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Password Updated"})
         except Exception as e:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
-        
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Password does not Match.')
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e)
+
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                        detail='Password does not Match.')

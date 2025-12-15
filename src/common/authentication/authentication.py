@@ -4,7 +4,6 @@ from typing_extensions import Annotated
 from configurations.firebase import *
 from firebase_admin import auth
 
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/2025/token")
 
 def signin_via_firebase(username: str, password: str):
@@ -63,9 +62,4 @@ def verify_access_token(token: Annotated[str, Depends(oauth2_scheme)]):
     except Exception as e:
         print(e)
 
-def sign_out():
-    try:
-        #
-        return
-    except Exception as e:
-        print(e)
+

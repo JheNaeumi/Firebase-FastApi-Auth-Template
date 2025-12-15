@@ -36,8 +36,6 @@ async def login(cred: Annotated[OAuth2PasswordRequestForm, Depends()],
     # Update DB email verified
     await crud.update_email_as_verfied(db, email=email)
 
-    
-
     # Create Token Model and Store/Create in DB
     created_token = await crud.create_token(db=db, token=schemas.TokenCreate(
         uid=user['localId'],
@@ -48,19 +46,19 @@ async def login(cred: Annotated[OAuth2PasswordRequestForm, Depends()],
     # Get User Info
     user = await crud.get_user_by_email(db=db, email=email)
 
-    
     # Pass Access and Refresh Token
     if created_token:
         return JSONResponse(
             content={"message": "Succesfully Logged In",
                      "user": user.to_json_profile(),
-                     "token" : created_token.to_json()
-                   },
+                     "token": created_token.to_json()
+                     },
             status_code=status.HTTP_200_OK
         )
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST
     )
+
 
 @router.post("/token")
 async def token(cred: Annotated[OAuth2PasswordRequestForm, Depends()],):
@@ -80,15 +78,14 @@ async def token(cred: Annotated[OAuth2PasswordRequestForm, Depends()],):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail='Email has not been verified')
     print(user)
-    return {"access_token" : user['idToken'], "refresh_token": user['refreshToken'], "token_type" : "bearer"}
+    return {"access_token": user['idToken'], "refresh_token": user['refreshToken'], "token_type": "bearer"}
 
-# @router.get("/signout")
-# async def sign_out():
+# Log out all sessions
+@router.delete("/token")
+async def revoke_tokens(userUID=Depends(verify_access_token)):
+    try:
 
-#     response = ''
-
-#     if response:
-#         return response
-#     raise HTTPException(
-#         status_code=status.HTTP_400_BAD_REQUEST
-#     )
+        auth.revoke_refresh_tokens(userUID)
+        return {'status': 'revoked'}
+    except Exception as e:
+        print(e)

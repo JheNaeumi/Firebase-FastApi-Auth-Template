@@ -90,9 +90,3 @@ async def register_new_user(email: Annotated[str, Form(media_type="multipart/for
     raise HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Something went wrong.')
 
-
-# Update Existing User
-@router.patch('/register')
-async def update_current_user():
-
-    return ''

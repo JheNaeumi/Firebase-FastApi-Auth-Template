@@ -1,6 +1,12 @@
 import json
 import urllib
 import os
+from dotenv import load_dotenv
+
+#.env
+load_dotenv(dotenv_path='dev.env')
+signing_key = os.getenv("SECRET_KEY")
+algo = os.getenv("ALGO")
 
 #absolute path
 abs_path = os.path.dirname(os.path.realpath(__file__))

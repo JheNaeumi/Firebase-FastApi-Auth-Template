@@ -78,11 +78,11 @@ class UpdateProfile(BaseModel):
     lname: str = Field(..., min_length=2, max_length=50)
     dname: str = Field(..., min_length=3, max_length=50)
 
-# Password - I 
+# Password - I
 class UpdatePassword(BaseModel):
     current_password: str = Field(..., min_length=8)
     new_password: str = Field(..., min_length=8, max_length=128)
-    
+
     @field_validator('new_password')
     @classmethod
     def validate_password_strength(cls, value: str) -> str:
@@ -92,6 +92,51 @@ class UpdatePassword(BaseModel):
             raise ValueError('Password must contain at least one lowercase letter')
         if not any(c.isdigit() for c in value):
             raise ValueError('Password must contain at least one number')
+        return value
+
+# Registration - I
+class RegistrationRequest(BaseModel):
+    email: str = Field(..., description="User email address")
+    password: str = Field(..., min_length=8, max_length=128, description="User password")
+    fname: str = Field(..., min_length=2, max_length=50, description="First name")
+    lname: str = Field(..., min_length=2, max_length=50, description="Last name")
+    dname: str = Field(..., min_length=3, max_length=50, description="Display name")
+    birthdate: datetime = Field(..., description="Birth date")
+
+    @field_validator('email')
+    @classmethod
+    def validate_email_format(cls, value: str) -> str:
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', value):
+            raise ValueError('Invalid email format')
+        return value.lower()
+
+    @field_validator('fname', 'lname', 'dname')
+    @classmethod
+    def validate_names(cls, value: str) -> str:
+        if not re.match(r"^[a-zA-Z\s\-'\.]+$", value):
+            raise ValueError('Name contains invalid characters')
+        return value.strip()
+
+    @field_validator('password')
+    @classmethod
+    def validate_password_strength(cls, value: str) -> str:
+        if not any(c.isupper() for c in value):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not any(c.islower() for c in value):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not any(c.isdigit() for c in value):
+            raise ValueError('Password must contain at least one number')
+        return value
+
+    @field_validator('birthdate')
+    @classmethod
+    def validate_age(cls, value: datetime) -> datetime:
+        today = datetime.today()
+        age = today.year - value.year
+        if age < 13:
+            raise ValueError('Must be at least 13 years old')
+        if age > 120:
+            raise ValueError('Invalid birth date')
         return value
 
 # Token

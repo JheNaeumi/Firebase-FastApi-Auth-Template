@@ -1,26 +1,22 @@
 import json
 import os
-# from fastapi.security import HTTPBearer
 from firebase_admin import credentials
 import firebase_admin
 import pyrebase
 
-# import pathlib
-# from dotenv import load_dotenv
-
-
-# basedir = pathlib.Path(__file__).parents[1]
-# load_dotenv( basedir / ".env")
-
-# bearer_scheme = HTTPBearer(auto_error=False)
-
 abs_path = os.path.dirname(os.path.realpath(__file__))
 
-fb_admin_config_json = 'fb_admin_config.json'
-fb_config_json = 'fb_config.json'
+fb_admin_config_json = "fb_admin_config.json"
+fb_config_json = "fb_config.json"
 
+admin_config_path = os.path.join(abs_path, fb_admin_config_json)
+client_config_path = os.path.join(abs_path, fb_config_json)
 
-cred = credentials.Certificate(os.path.join(abs_path, fb_admin_config_json))
+if not os.path.exists(admin_config_path):
+    raise FileNotFoundError(f"Firebase admin config not found: {admin_config_path}")
+if not os.path.exists(client_config_path):
+    raise FileNotFoundError(f"Firebase client config not found: {client_config_path}")
+
+cred = credentials.Certificate(admin_config_path)
 firebase = firebase_admin.initialize_app(cred)
-pb = pyrebase.initialize_app(
-    json.load(open(os.path.join(abs_path, fb_config_json))))
+pb = pyrebase.initialize_app(json.load(open(client_config_path)))

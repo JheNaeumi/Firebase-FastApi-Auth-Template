@@ -2,20 +2,29 @@ import json
 import urllib
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
-#.env
-load_dotenv(dotenv_path='dev.env')
+load_dotenv(dotenv_path="dev.env")
 signing_key = os.getenv("SECRET_KEY")
 algo = os.getenv("ALGO")
 
-#absolute path
 abs_path = os.path.dirname(os.path.realpath(__file__))
-db_config = json.load(open(os.path.join(abs_path, 'db_config.json')))
+config_path = os.path.join(abs_path, "db_config.json")
 
-default_config = db_config['default']
+if not os.path.exists(config_path):
+    raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
-default_db_connection = urllib.parse.quote_plus(default_config['connection'])
+try:
+    db_config = json.load(open(config_path))
+except json.JSONDecodeError as e:
+    raise ValueError(f"Invalid JSON in {config_path}: {e}")
 
-db_conn = "mssql+aioodbc:///?odbc_connect={PARAMS}".format(
-    PARAMS=urllib.parse.quote_plus(default_db_connection))
-print(default_db_connection)
+default_config = db_config.get("default")
+if not default_config:
+    raise KeyError("'default' key not found in db_config.json")
+
+default_db_connection = urllib.parse.quote_plus(default_config.get("connection", ""))
+if not default_db_connection:
+    raise ValueError("Database connection string not configured")
+
+db_conn = f"mssql+aioodbc:///?odbc_connect={urllib.parse.quote_plus(default_db_connection)}"

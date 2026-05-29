@@ -8,6 +8,8 @@ load_dotenv(dotenv_path="dev.env")
 signing_key = os.getenv("SECRET_KEY")
 algo = os.getenv("ALGO")
 
+redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
 abs_path = os.path.dirname(os.path.realpath(__file__))
 config_path = os.path.join(abs_path, "db_config.json")
 

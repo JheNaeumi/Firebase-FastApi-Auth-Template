@@ -4,6 +4,7 @@
 from datetime import date, datetime
 from typing import Any, Union
 
+from fastapi import Form
 from pydantic import BaseModel, Field, field_validator
 import re
 
@@ -103,6 +104,17 @@ class RegistrationRequest(BaseModel):
     dname: str = Field(..., min_length=3, max_length=50, description="Display name")
     birthdate: datetime = Field(..., description="Birth date")
 
+
+    @classmethod
+    def as_form(cls, 
+        email: str = Form(...),
+        password: str = Form(...),
+        fname: str = Form(...),
+        lname: str = Form(...),
+        dname: str = Form(...),
+        birthdate: datetime = Form(...)
+    ):
+        return cls(email=email, password=password, fname=fname, lname=lname, dname=dname, birthdate=birthdate)
     @field_validator('email')
     @classmethod
     def validate_email_format(cls, value: str) -> str:
@@ -138,6 +150,8 @@ class RegistrationRequest(BaseModel):
         if age > 120:
             raise ValueError('Invalid birth date')
         return value
+
+
 
 # Token
 class TokenCreate(BaseModel):

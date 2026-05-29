@@ -5,3 +5,4 @@ fb_config.json
 env/
 *.pyc
 dev.env
+.env

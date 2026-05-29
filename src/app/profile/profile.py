@@ -2,11 +2,13 @@
 
 from fastapi import APIRouter, Depends, Form, HTTPException, status
 from fastapi.responses import JSONResponse
+from typing_extensions import Annotated
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 from common.db import db, crud, schemas
 from common.authentication.authentication import *
+from common.cache import redis_helper
 from firebase_admin import auth
 import bcrypt
 
@@ -89,3 +91,32 @@ async def update_password(currentpassword: Annotated[str, Form(min_length=8)], n
 
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                         detail='Password does not Match.')
+
+
+# Get Session Information
+@router.get('/session-info')
+async def get_session_info(user_uid: str = Depends(verify_access_token)):
+    """
+    Get current session timeout information.
+    Shows when the session will expire due to inactivity or absolute timeout.
+    """
+    try:
+        remaining = await redis_helper.get_session_remaining(user_uid)
+        is_active, reason = await redis_helper.is_session_active(user_uid)
+
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "session_active": is_active,
+                "inactivity_timeout_seconds": remaining.get("inactivity_remaining_seconds", 0),
+                "absolute_timeout_seconds": remaining.get("absolute_remaining_seconds"),
+                "inactivity_timeout_minutes": round(remaining.get("inactivity_remaining_seconds", 0) / 60, 1),
+                "message": "Your session will expire in the time shown above. Activity resets the inactivity timer."
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to get session info: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve session information"
+        )
